@@ -1,0 +1,1 @@
+"""Bank Annual Report Analyzer."""
