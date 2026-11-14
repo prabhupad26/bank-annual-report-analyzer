@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bank-annual-report-analyzer"
+version = "0.1.0"
+description = "European bank annual report ingestion and retrieval"
+requires-python = ">=3.10"
+dependencies = ["pymupdf>=1.24", "requests>=2.31"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+bank-reports-download = "bank_analyzer.ingestion.download:main"
+bank-reports-parse = "bank_analyzer.parsing.pdf_to_markdown:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
