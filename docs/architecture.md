@@ -7,7 +7,7 @@ Maintain a curated manifest of official investor-relations PDF URLs. Record bank
 Current baseline: page-wise PyMuPDF text to Markdown. Target: document layout model, explicit section tree, extracted tables with row/column semantics, figure assets with caption and OCR/vision-derived values, footnotes, and cross-page table stitching. Each extracted element should retain page number, bounding box, source file hash, and extraction confidence. Human review for ambiguous numeric data.
 
 ## 3. Financial data
-Load public regulatory/statistical APIs and bank-reported tables into PostgreSQL with canonical metric definitions. Normalize reporting period, consolidated scope, currency, units, accounting basis, and restatements. Never treat incompatible definitions as directly comparable.
+An initial annual, bank-level ingestion pipeline is implemented: SEC EDGAR companyfacts (keyless; requires identifying User-Agent) and FMP financial statement endpoints (API key), with configurable bank mappings and PostgreSQL upserts. Regulatory capital and asset-quality metrics from EBA public CSV downloads remain future work. Normalize reporting period, consolidated scope, currency, units, accounting basis, and restatements. Never treat incompatible definitions as directly comparable.
 
 ## 4. Retrieval
 Index text chunks and table descriptions separately, with bank/year/section/page metadata. Combine keyword and vector search, apply metadata filters and reranking, then generate responses with source citations. Validate that cited evidence supports each numeric claim. Proposed options: PostgreSQL + pgvector for small scale; Qdrant for dedicated vector serving.
