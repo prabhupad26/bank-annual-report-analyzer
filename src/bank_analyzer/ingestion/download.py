@@ -12,9 +12,40 @@ from bank_analyzer.config import BANKS
 
 def download_manifest(manifest: Path, output: Path) -> None:
     with manifest.open(newline="", encoding="utf-8") as handle:
-        for row in csv.DictReader(handle):
+        reader = csv.DictReader(
+            line for line in handle if line.strip() and not line.lstrip().startswith("#")
+        )
+        required_fields = {"bank", "year", "url"}
+        if reader.fieldnames is None:
+            raise ValueError(f"Manifest has no header: {manifest}")
+        missing_fields = required_fields - set(reader.fieldnames)
+        if missing_fields:
+            raise ValueError(
+                f"Manifest is missing required columns: {', '.join(sorted(missing_fields))}"
+            )
+
+        report_count = 0
+        for row_number, row in enumerate(reader, start=2):
+            report_count += 1
+            if None in row:
+                raise ValueError(f"Manifest row {row_number} has too many columns")
+            missing_values = [
+                field for field in ("bank", "year", "url")
+                if row[field] is None or not row[field].strip()
+            ]
+            if missing_values:
+                raise ValueError(
+                    f"Manifest row {row_number} is missing values for: "
+                    f"{', '.join(missing_values)}"
+                )
+
             bank = row["bank"].strip().lower()
-            year = int(row["year"])
+            try:
+                year = int(row["year"])
+            except ValueError as exc:
+                raise ValueError(
+                    f"Manifest row {row_number} has an invalid year: {row['year']!r}"
+                ) from exc
             url = row["url"].strip()
             if bank not in BANKS or not (2000 <= year <= 2100):
                 raise ValueError(f"Invalid bank/year: {bank}/{year}")
@@ -42,6 +73,8 @@ def download_manifest(manifest: Path, output: Path) -> None:
                 print(f"OK {target} sha256={digest.hexdigest()}")
             finally:
                 temp.unlink(missing_ok=True)
+        if report_count == 0:
+            raise ValueError(f"Manifest has no report entries: {manifest}")
 
 def main() -> None:
     parser = argparse.ArgumentParser()

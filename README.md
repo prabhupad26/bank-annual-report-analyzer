@@ -42,6 +42,7 @@ cp data/manifest.example.csv data/manifest.csv
 bank-reports-download --manifest data/manifest.csv
 bank-reports-parse --input data/raw --output data/processed
 ```
+The downloader ignores blank and comment lines in the CSV. Add at least one complete `bank,year,url` row before running it.
 
 Optional database:
 ```bash
