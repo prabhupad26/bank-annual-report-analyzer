@@ -91,4 +91,4 @@ Read [free SEC EDGAR setup and coverage notes](docs/metrics.md) and [example SQL
 
 **API caveat:** SEC facts include only supported standard XBRL concepts; FMP access/coverage depends on your account. BNP Paribas is not mapped to an issuer-level SEC Company Facts CIK in the initial registry. The code has offline tests, but this repository does not ship a populated database or claim successful end-to-end API downloads.
 
-The free SEC-only run skips BNP Paribas (no verified group-level SEC Form 20-F CIK). This is not complete five-bank coverage. EDGAR primary filings are HTML/iXBRL, not PDFs; converting them to Markdown is a separate parsing step.\n
+The free SEC-only run skips BNP Paribas (no verified group-level SEC Form 20-F CIK). This is not complete five-bank coverage. EDGAR primary filings are HTML/iXBRL, not PDFs; converting them to Markdown is a separate parsing step.
