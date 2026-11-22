@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import os
 import sys
 
 from bank_analyzer.metrics.db import connect, init_database, show_metrics, store_facts
@@ -16,7 +15,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("init-db", help="Create PostgreSQL schema and apply additive migrations")
     sync = sub.add_parser("sync", help="Backfill or refresh annual financial metrics")
     sync.add_argument("--config", default="data/metric_banks.csv")
-    sync.add_argument("--provider", choices=["auto", "sec", "fmp"], default="auto")
+    sync.add_argument("--provider", choices=["auto", "sec", "fmp"], default="sec")
     sync.add_argument("--banks", help="Comma-separated bank slugs; defaults to every config row")
     sync.add_argument("--start-year", type=int, default=2021)
     sync.add_argument("--end-year", type=int, default=2025)
@@ -56,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
         if not banks:
             parser.error("No banks selected")
     failures = 0
+    skipped = 0
     # Opening the DB first ensures a missing server/driver is reported before API calls.
     if not args.dry_run:
         conn = connect()
@@ -72,6 +72,11 @@ def main(argv: list[str] | None = None) -> int:
         for bank in banks:
             provider = (args.provider if args.provider != "auto"
                         else ("sec" if bank.sec_cik else "fmp"))
+            if provider == "sec" and not bank.sec_cik:
+                skipped += 1
+                print(f"{bank.slug}: SEC SKIPPED (no verified group-level 20-F issuer)",
+                      file=sys.stderr)
+                continue
             try:
                 fetch = fetch_sec if provider == "sec" else fetch_fmp
                 facts = fetch(bank, args.start_year, args.end_year)
@@ -90,6 +95,8 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         if conn is not None:
             conn.close()
+    if skipped:
+        print(f"{skipped} bank(s) not supported by SEC-only ingestion", file=sys.stderr)
     if failures:
         print(f"{failures} bank(s) failed; check the API, credentials, and coverage",
               file=sys.stderr)

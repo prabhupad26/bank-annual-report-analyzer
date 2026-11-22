@@ -51,7 +51,7 @@ psql postgresql://bank:bank@localhost:5432/bank_reports -f src/bank_analyzer/sto
 ```
 
 ## Status and limitations
-This is an initial **working monorepo foundation**, not a completed production RAG system. Prior exploratory scripts and raw reports from earlier conversations are not automatically available in this repository. PDF extraction currently preserves page text and source metadata, but does **not** yet reliably reconstruct charts, complex tables, or exact section hierarchies. No unverified financial figures or fabricated report URLs are included. SEC EDGAR and FMP API adapters, annual metric normalization, database upserts, and offline ingestion tests are implemented. Verified live API coverage, embeddings, vector DB, answer generation, and end-to-end evaluations are not yet complete.
+This is an initial **working monorepo foundation**, not a completed production RAG system. Prior exploratory scripts and raw reports from earlier conversations are not automatically available in this repository. PDF extraction currently preserves page text and source metadata, but does **not** yet reliably reconstruct charts, complex tables, or exact section hierarchies. No unverified financial figures or fabricated report URLs are included. SEC EDGAR financial-metric and filing-index API adapters (plus optional FMP), annual metric normalization, PostgreSQL upserts, and offline tests are implemented. Verified live API coverage, embeddings, vector DB, answer generation, and end-to-end evaluations are not yet complete.
 
 ## Principles
 Official sources first; provenance on every document and metric; deterministic reruns; idempotent ingestion; no credentials in Git; cite page numbers in answers; distinguish reported vs calculated metrics.
@@ -70,19 +70,25 @@ bank-metrics init-db
 # SEC EDGAR is keyless, but SEC requires a genuine identifying User-Agent.
 export SEC_USER_AGENT="BankAnnualReportAnalyzer/0.1 your-real-email@domain.com"
 
-# Optional FMP subscription/API key, required for BNP Paribas in auto mode.
-export FMP_API_KEY="YOUR_REAL_FMP_API_KEY"
+# Free SEC EDGAR is the default (four mapped banks; BNP skipped explicitly).
+bank-metrics sync --start-year 2021 --end-year 2025
 
-# By default: SEC for banks with a mapped CIK; FMP for BNP Paribas.
-bank-metrics sync --provider auto --start-year 2021 --end-year 2025
+# Discover Form 20-F filings and save links in PostgreSQL.
+bank-sec-filings --start-year 2021 --end-year 2025
 
-# Run SEC-only without an FMP key (four mapped banks).
-bank-metrics sync --provider sec --banks barclays,deutsche_bank,hsbc,ing
+# Optional: download the original filing HTML/iXBRL documents.
+bank-sec-filings --download
+
+# Only if you choose the optional paid FMP provider:
+# export FMP_API_KEY="YOUR_REAL_FMP_API_KEY"
+# bank-metrics sync --provider fmp
 
 # Read observations back as CSV.
 bank-metrics show --bank deutsche_bank --year 2025
 ```
 
-Read [metrics setup, provenance and limitations](docs/metrics.md) and [example SQL queries](docs/queries_metrics.sql).
+Read [free SEC EDGAR setup and coverage notes](docs/metrics.md) and [example SQL queries](docs/queries_metrics.sql).
 
 **API caveat:** SEC facts include only supported standard XBRL concepts; FMP access/coverage depends on your account. BNP Paribas is not mapped to an issuer-level SEC Company Facts CIK in the initial registry. The code has offline tests, but this repository does not ship a populated database or claim successful end-to-end API downloads.
+
+The free SEC-only run skips BNP Paribas (no verified group-level SEC Form 20-F CIK). This is not complete five-bank coverage. EDGAR primary filings are HTML/iXBRL, not PDFs; converting them to Markdown is a separate parsing step.\n

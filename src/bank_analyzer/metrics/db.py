@@ -45,8 +45,8 @@ def connect() -> psycopg.Connection:
 
 
 def init_database(conn: psycopg.Connection) -> None:
-    """Apply existing report schema first, then additive metrics migration."""
-    for name in ("schema.sql", "metrics_migration.sql"):
+    """Apply report, metrics and SEC filings schemas without deleting existing data."""
+    for name in ("schema.sql", "metrics_migration.sql", "sec_filings.sql"):
         conn.execute((SCHEMA_DIR / name).read_text(encoding="utf-8"))
     for code, (label, unit, description) in METRICS.items():
         conn.execute(

@@ -16,6 +16,7 @@ dev = ["pytest>=8", "ruff>=0.6"]
 bank-reports-download = "bank_analyzer.ingestion.download:main"
 bank-reports-parse = "bank_analyzer.parsing.pdf_to_markdown:main"
 bank-metrics = "bank_analyzer.metrics.cli:main"
+bank-sec-filings = "bank_analyzer.ingestion.sec_edgar:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
